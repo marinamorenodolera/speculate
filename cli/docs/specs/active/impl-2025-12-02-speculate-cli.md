@@ -56,7 +56,7 @@ The implementation is broken into phases that may be committed and tested separa
   ]
   ```
 
-- [x] Update entry point in `cli/pyproject.toml`:
+- [x] Update entry point in `cli/pyproject.toml` (depends on Phase 2 cli/ module):
 
   ```toml
   [project.scripts]
@@ -69,16 +69,9 @@ The implementation is broken into phases that may be committed and tested separa
   _min_copier_version: "9.4.0"
   
   _exclude:
-    - copier.yml
-    - cli/
-    - LICENSE
-    - .git/
-    - .github/
-    - .cursor/
-    - .speculate/
-    - __pycache__/
-    - "*.pyc"
-    - "*.lock"
+    - "*"
+    - ".*"
+    - "!docs/"
   
   _skip_if_exists:
     - docs/development.md
@@ -148,7 +141,11 @@ The implementation is broken into phases that may be committed and tested separa
   from __future__ import annotations
   from rich import print as rprint
   
-  def init(destination: str = ".", force: bool = False) -> None:
+  def init(
+      destination: str = ".",
+      force: bool = False,
+      template: str = "gh:jlevy/speculate"
+  ) -> None:
       """Initialize docs in a project using Copier."""
       rprint("[yellow]Not implemented yet[/yellow]")
   
@@ -156,7 +153,7 @@ The implementation is broken into phases that may be committed and tested separa
       """Update docs from the upstream template."""
       rprint("[yellow]Not implemented yet[/yellow]")
   
-  def install() -> None:
+  def install(include: list[str] | None = None, exclude: list[str] | None = None) -> None:
       """Generate tool configs for Cursor, Claude Code, and Codex."""
       rprint("[yellow]Not implemented yet[/yellow]")
   
@@ -164,6 +161,8 @@ The implementation is broken into phases that may be committed and tested separa
       """Show current template version and sync status."""
       rprint("[yellow]Not implemented yet[/yellow]")
   ```
+
+- [ ] Remove legacy `cli/src/speculate/speculate.py` and update `__init__.py`
 
 - [ ] Test `cd cli && uv run speculate --help` works
 
@@ -203,11 +202,16 @@ None.
 
 - [ ] Implement `init` command:
 
-  - Copy template using `copier.run_copy("gh:jlevy/speculate", dst)`
+  - Support `--template` argument (default: “gh:jlevy/speculate”)
+
+  - Copy template using `copier.run_copy(template, dst)`
+
+  - Copy `docs/project/development.sample.md` to `docs/development.md` if the
+    destination `development.md` does not exist.
 
   - Automatically call `install()` after copy
 
-  - Show instructions about creating `docs/development.md`
+  - Show instructions about customizing `docs/development.md`
 
 - [ ] Implement `update` command:
 
@@ -221,11 +225,11 @@ None.
 
   - Create/update `.speculate/settings.yml` with:
 
-    - `last_update`: ISO8601 timestamp (current time in UTC)
-
-    - `last_cli_version`: Version from `importlib.metadata.version("speculate")`
-
-    - `last_docs_version`: `_commit` from `.copier-answers.yml` (if available)
+    ```yaml
+    last_update: "2024-12-03T12:00:00Z"
+    last_cli_version: "0.1.0"
+    last_docs_version: "v0.2.3" # from .copier-answers.yml
+    ```
 
   - Support `--include` and `--exclude` patterns (wildcards: `*`, `**`)
 
@@ -308,6 +312,8 @@ No new libraries beyond Phase 1.
 ### Tasks
 
 - [ ] Test `speculate init` in a fresh empty directory
+
+- [ ] Test `speculate init --template .` using the local repo as template
 
 - [ ] Test `speculate init` in a directory with existing docs/
 
