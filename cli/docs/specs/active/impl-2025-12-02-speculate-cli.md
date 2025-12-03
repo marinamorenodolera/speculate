@@ -235,10 +235,10 @@ None.
 
     ```
     IMPORTANT: You MUST read ./docs/development.md and ./docs/docs-overview.md for project documentation.
-    (This project uses speculate project structure.)
+    (This project uses Speculate project structure.)
     ```
 
-  - Check for “speculate project structure” marker to avoid duplicate headers
+  - Check for “Speculate project structure” marker to avoid duplicate headers
 
   - Create `.cursor/rules/` symlinks with `.mdc` extension pointing to `.md` files
 
