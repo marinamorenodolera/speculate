@@ -79,6 +79,11 @@ def build_parser() -> argparse.ArgumentParser:
                 default="gh:jlevy/speculate",
                 help="template source (default: gh:jlevy/speculate)",
             )
+            subparser.add_argument(
+                "--ref",
+                default="HEAD",
+                help="git ref for speculate docs files (tag, branch, commit); default: HEAD",
+            )
 
         if func is install:
             subparser.add_argument(
@@ -112,7 +117,12 @@ def main() -> None:
 
     try:
         if subcommand == "init":
-            init(destination=args.destination, overwrite=args.overwrite, template=args.template)
+            init(
+                destination=args.destination,
+                overwrite=args.overwrite,
+                template=args.template,
+                ref=args.ref,
+            )
         elif subcommand == "update":
             update()
         elif subcommand == "install":

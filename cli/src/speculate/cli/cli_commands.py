@@ -43,16 +43,21 @@ def init(
     destination: str = ".",
     overwrite: bool = False,
     template: str = "gh:jlevy/speculate",
+    ref: str = "HEAD",
 ) -> None:
     """Initialize docs in a project using Copier.
 
     Copies the docs/ directory from the speculate template into your project.
     Creates a .copier-answers.yml file for future updates.
 
+    By default, always pulls from the latest commit (HEAD) so docs updates
+    don't require new CLI releases. Use --ref to update to a specific version.
+
     Examples:
       speculate init              # Initialize in current directory
       speculate init ./my-project # Initialize in specific directory
       speculate init --overwrite  # Overwrite without confirmation
+      speculate init --ref v1.0.0 # Use specific tag/commit
     """
     import copier  # Lazy import - large package
 
@@ -79,7 +84,8 @@ def init(
             raise SystemExit(0)
 
     rprint()
-    _ = copier.run_copy(template, str(dst), overwrite=overwrite, defaults=overwrite)
+    # vcs_ref=HEAD ensures we always get latest docs without needing CLI releases
+    _ = copier.run_copy(template, str(dst), overwrite=overwrite, defaults=overwrite, vcs_ref=ref)
 
     # Copy development.sample.md to development.md if it doesn't exist
     sample_dev_md = dst / "docs" / "project" / "development.sample.md"
