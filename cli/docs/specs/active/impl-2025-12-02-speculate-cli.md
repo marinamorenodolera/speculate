@@ -67,7 +67,7 @@ The implementation is broken into phases that may be committed and tested separa
 
   ```yaml
   _min_copier_version: "9.4.0"
-
+  
   # Only copy docs/ directory using negation patterns (gitignore-style)
   # First exclude everything, then whitelist only root-level docs/
   # The leading / anchors the pattern to the template root
@@ -75,16 +75,16 @@ The implementation is broken into phases that may be committed and tested separa
     - "**"
     - "!/docs"
     - "!/docs/**"
-
+  
   _message_after_copy: |
     Speculate docs installed!
     See docs/docs-overview.md for usage guide.
   ```
 
   **Note:** The original planned patterns (`"*"`, `".*"`, `"!docs/"`) did not work
-  correctly with copier/pathspec. The working solution uses gitignore-style negation
-  patterns with leading `/` to anchor to the template root, preventing `cli/docs/`
-  from being inadvertently included.
+  correctly with copier/pathspec.
+  The working solution uses gitignore-style negation patterns with leading `/` to anchor
+  to the template root, preventing `cli/docs/` from being inadvertently included.
 
 ### Automated Testing Strategy
 
@@ -323,7 +323,7 @@ No new libraries beyond Phase 1.
 
 - [x] Run `make lint` and fix any issues
 
-- [x] Run `make test` and ensure tests pass (41 tests passing)
+- [x] Run `make test` and ensure tests pass (43 tests passing)
 
 - [x] Verify all `--help` messages are clear
 
@@ -399,3 +399,42 @@ No new libraries.
 - Custom template support
 
 - Windsurf configuration
+
+## Bug Fixes
+
+### Fix: .copier-answers.yml not being created (2025-12-02)
+
+**Problem:** `speculate init` was not creating `.copier-answers.yml`, which is required
+for `speculate update` to work.
+The `status` command also showed a yellow ✘ for this missing file instead of a red
+error.
+
+**Root Cause:** Copier requires a template file named
+`{{_copier_conf.answers_file}}.jinja` in the template root for it to create the answers
+file. This file was missing.
+
+**Fix:**
+
+1. Created `{{_copier_conf.answers_file}}.jinja` at repo root with contents:
+   ```
+   # Changes here will be overwritten by Copier; do NOT edit by hand
+   {{ _copier_answers|to_nice_yaml -}}
+   ```
+
+2. Updated `copier.yml` to use explicit exclusions instead of `**` negation patterns
+   (the negation pattern approach was also excluding the answers file output)
+
+3. Updated `status` command to use `print_error_item` for missing `.copier-answers.yml`
+   and set `has_errors = True` so status exits with code 1
+
+4. Added test `test_fails_without_copier_answers` to verify this behavior
+
+**Files Changed:**
+
+- `copier.yml` — Rewrote exclude patterns
+
+- `{{_copier_conf.answers_file}}.jinja` — New file
+
+- `cli/src/speculate/cli/cli_commands.py` — Updated status error handling
+
+- `cli/tests/test_cli_commands.py` — Added new test, updated existing tests

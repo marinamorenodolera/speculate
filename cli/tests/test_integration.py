@@ -121,6 +121,23 @@ class TestInitWithLocalTemplate:
         md_files = list(rules_dir.glob("*.md"))
         assert len(md_files) > 0, "No rule files copied"
 
+    def test_init_creates_copier_answers_file(self, tmp_path: Path):
+        """Init should create .copier-answers.yml for future updates."""
+        result = run_speculate("init", "--overwrite", "--template", str(REPO_ROOT), cwd=tmp_path)
+
+        assert result.returncode == 0, f"init failed: {result.stderr}"
+
+        # .copier-answers.yml should exist
+        answers_file = tmp_path / ".copier-answers.yml"
+        assert answers_file.exists(), ".copier-answers.yml not created"
+
+        # Should contain required copier metadata
+        import yaml
+
+        content = yaml.safe_load(answers_file.read_text())
+        assert "_commit" in content, "_commit missing from .copier-answers.yml"
+        assert "_src_path" in content, "_src_path missing from .copier-answers.yml"
+
     def test_init_auto_runs_install(self, tmp_path: Path):
         """Init should automatically run install and create tool configs."""
         result = run_speculate("init", "--overwrite", "--template", str(REPO_ROOT), cwd=tmp_path)

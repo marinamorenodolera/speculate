@@ -164,6 +164,10 @@ class TestStatusCommand:
         """Should fail if development.md is missing."""
         docs_dir = tmp_path / "docs"
         docs_dir.mkdir()
+        # Create copier-answers so it doesn't fail on that first
+        (tmp_path / ".copier-answers.yml").write_text(
+            yaml.dump({"_commit": "abc123", "_src_path": "test"})
+        )
 
         monkeypatch.chdir(tmp_path)
 
@@ -171,11 +175,26 @@ class TestStatusCommand:
             status()
         assert exc_info.value.code == 1
 
-    def test_succeeds_with_development_md(self, tmp_path: Path, monkeypatch: MonkeyPatch):
-        """Should succeed if development.md exists."""
+    def test_fails_without_copier_answers(self, tmp_path: Path, monkeypatch: MonkeyPatch):
+        """Should fail if .copier-answers.yml is missing."""
         docs_dir = tmp_path / "docs"
         docs_dir.mkdir()
         (docs_dir / "development.md").write_text("# Development")
+
+        monkeypatch.chdir(tmp_path)
+
+        with pytest.raises(SystemExit) as exc_info:
+            status()
+        assert exc_info.value.code == 1
+
+    def test_succeeds_with_all_required_files(self, tmp_path: Path, monkeypatch: MonkeyPatch):
+        """Should succeed if development.md and .copier-answers.yml exist."""
+        docs_dir = tmp_path / "docs"
+        docs_dir.mkdir()
+        (docs_dir / "development.md").write_text("# Development")
+        (tmp_path / ".copier-answers.yml").write_text(
+            yaml.dump({"_commit": "abc123", "_src_path": "test"})
+        )
 
         monkeypatch.chdir(tmp_path)
 

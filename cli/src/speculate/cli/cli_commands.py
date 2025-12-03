@@ -223,7 +223,7 @@ def status() -> None:
 
     print_header("Speculate Status", cwd)
 
-    # Check .copier-answers.yml
+    # Check .copier-answers.yml (required for update)
     answers_file = cwd / ".copier-answers.yml"
     if answers_file.exists():
         answers = _load_yaml(answers_file)
@@ -232,7 +232,11 @@ def status() -> None:
         print_success(f"Template version: {commit}")
         print_detail(f"Source: {src}")
     else:
-        print_missing("No .copier-answers.yml (not initialized)")
+        print_error_item(
+            ".copier-answers.yml missing (required!)",
+            "Run `speculate init` to initialize docs.",
+        )
+        has_errors = True
 
     # Check .speculate/settings.yml
     settings_file = cwd / ".speculate" / "settings.yml"
