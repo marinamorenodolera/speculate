@@ -84,6 +84,9 @@ source = "uv-dynamic-versioning"
 vcs = "git"
 style = "pep440"
 bump = true
+# Use tag prefix for CLI-specific versioning in this monorepo.
+# Tags should be: cli-v1.0.0, cli-v1.0.1, etc.
+tag-prefix = "cli-v"
 
 [tool.hatch.build.targets.wheel]
 # The source location for the package.
