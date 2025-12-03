@@ -62,7 +62,11 @@ dev = [
 ]
 
 [project.scripts]
+# Both entry points point to the same CLI:
+# - "speculate" is the primary command after `uv tool install speculate-cli`
+# - "speculate-cli" allows `uvx speculate-cli` to work directly
 speculate = "speculate.cli.cli_main:main"
+speculate-cli = "speculate.cli.cli_main:main"
 
 
 # ---- Build system ----
