@@ -2,8 +2,9 @@ Shortcut: Implement Spec
 
 Instructions:
 
-1. Review @docs/general/agent-rules/ and @docs/general/notes/testing-guidelines.md to
-   understand all project and testing rules.
+1. Review @docs/general/agent-rules/ and
+   @docs/general/agent-guidelines/testing-guidelines.md to understand all project and
+   testing rules.
 
 2. Review the spec (if spec is unclear ask for clarification on which spec to use).
 

@@ -86,13 +86,13 @@ This repository (`speculate`) contains:
 
 - `docs/general/agent-shortcuts/` — Reusable shortcuts
 
-- `docs/general/notes/` — Guidelines and notes
+- `docs/general/agent-guidelines/` — Guidelines and notes
 
 - `docs/project/` — Project-specific templates (specs, architecture, research)
 
-- `docs/DOCS-README.md` — Documentation explaining the system
+- `docs/docs-overview.md` — Documentation explaining the system
 
-See `docs/DOCS-README.md` for full documentation structure.
+See `docs/docs-overview.md` for full documentation structure.
 
 ### Reference Code from uvinit
 
@@ -341,6 +341,8 @@ Not applicable — this is a new tool with no existing users.
 
 - [ ] `speculate install` — Generate tool configs
 
+  - Create/update `.speculate/settings.yml` with state (last_update, versions)
+
   - Create/update `CLAUDE.md` pointing to docs
 
   - Create/update `AGENTS.md` pointing to docs
@@ -348,6 +350,8 @@ Not applicable — this is a new tool with no existing users.
   - Create `.cursor/rules/` symlinks to docs/general/agent-rules/
 
 - [ ] `speculate status` — Show current state
+
+  - Speculate state from `.speculate/settings.yml`
 
   - Template version from `.copier-answers.yml`
 
@@ -391,7 +395,7 @@ The repository has two main parts:
 speculate/                        # Repository root
 ├── copier.yml                    # Copier config (at root, references docs/)
 ├── docs/                         # Template content (copied to user projects)
-│   ├── DOCS-README.md
+│   ├── docs-overview.md
 │   ├── general/
 │   │   ├── agent-rules/         # Rule files (*.md)
 │   │   ├── agent-shortcuts/     # Shortcut files (*.md)
@@ -416,6 +420,42 @@ speculate/                        # Repository root
 │   └── tests/
 └── LICENSE
 ```
+
+### Speculate Settings Directory
+
+Speculate maintains its own state in a `.speculate/` directory in user projects:
+
+```
+project-root/
+├── .speculate/
+│   └── settings.yml              # Speculate state and settings
+├── .copier-answers.yml           # Copier template state (managed by Copier)
+├── docs/                         # Docs from speculate template
+└── ...
+```
+
+**`.speculate/settings.yml` format:**
+
+```yaml
+# Speculate settings - managed by `speculate install`
+last_update: "2025-12-03T10:30:00Z"   # ISO8601 timestamp of last install
+last_cli_version: "0.1.0"             # Version of speculate CLI used
+last_docs_version: "v0.2.3"           # Git commit/tag from .copier-answers.yml
+```
+
+| Field | Description |
+| --- | --- |
+| `last_update` | ISO8601 timestamp of the last `speculate install` run |
+| `last_cli_version` | Version string of the speculate CLI (same as `--version`) |
+| `last_docs_version` | Git commit/tag from `.copier-answers.yml` `_commit` field |
+
+This file is:
+
+- Created by `install` (and thus by `init` and `update` which call `install`)
+
+- Read by `status` to display current state
+
+- Updated each time `install` runs
 
 Note: The CLI is in `cli/` subdirectory with its own pyproject.toml.
 The copier.yml at the repo root will only copy `docs/` to user projects (excluding cli/,
@@ -487,6 +527,7 @@ _exclude:
   - .git/
   - .github/
   - .cursor/
+  - .speculate/           # Project-specific state (not template content)
   - __pycache__/
   - "*.pyc"
   - "*.lock"
@@ -494,7 +535,7 @@ _exclude:
 # Project-specific files: create once, don't overwrite on update
 # These are user-customized files that should not be replaced
 _skip_if_exists:
-  - docs/project/development.md
+  - docs/development.md
   - "docs/project/specs/active/*"
   - "docs/project/specs/done/*"
   - "docs/project/specs/future/*"
@@ -507,7 +548,7 @@ _skip_if_exists:
 _message_after_copy: |
   Speculate docs installed!
 
-  See docs/DOCS-README.md for usage guide.
+  See docs/docs-overview.md for usage guide.
 
   Next steps:
     speculate install    # Configure Cursor/Claude Code/Codex
@@ -729,7 +770,7 @@ def init(destination: str = ".", force: bool = False) -> None:
 
     # Remind user about required project-specific setup
     rprint("[bold yellow]Required next step:[/bold yellow]")
-    rprint("  Create docs/project/development.md with your project-specific setup.")
+    rprint("  Create docs/development.md with your project-specific setup.")
     rprint("  Use docs/project/development.sample.md as a template.")
     rprint()
     rprint("Other commands:")
@@ -776,6 +817,7 @@ def install(
     """Generate tool configs for Cursor, Claude Code, and Codex.
 
     Creates or updates:
+      - .speculate/settings.yml (speculate state)
       - CLAUDE.md (for Claude Code) — adds speculate header if missing
       - AGENTS.md (for Codex) — adds speculate header if missing
       - .cursor/rules/ (symlinks for Cursor)
@@ -803,6 +845,9 @@ def install(
 
     rprint("\n[bold]Installing tool configurations...[/bold]\n")
 
+    # .speculate/settings.yml — update speculate state
+    _update_speculate_settings(cwd)
+
     # CLAUDE.md — ensure speculate header at top (idempotent)
     _ensure_speculate_header(cwd / "CLAUDE.md")
 
@@ -819,6 +864,7 @@ def status() -> None:
     """Show current template version and sync status.
 
     Displays:
+      - Speculate state from .speculate/settings.yml
       - Template version from .copier-answers.yml
       - Whether docs/ exists
       - Whether development.md exists (required)
@@ -835,6 +881,18 @@ def status() -> None:
     has_errors = False
 
     rprint("\n[bold]Speculate Status[/bold]\n")
+
+    # Check .speculate/settings.yml
+    settings_file = cwd / ".speculate" / "settings.yml"
+    if settings_file.exists():
+        with open(settings_file) as f:
+            settings = yaml.safe_load(f) or {}
+        last_update = settings.get("last_update", "unknown")
+        cli_version = settings.get("last_cli_version", "unknown")
+        rprint(f"[green]✔︎[/green] Last install: {last_update}")
+        rprint(f"   CLI version: {cli_version}")
+    else:
+        rprint("[dim]○[/dim] .speculate/settings.yml not found (run `speculate install`)")
 
     # Check .copier-answers.yml
     answers_file = cwd / ".copier-answers.yml"
@@ -859,9 +917,9 @@ def status() -> None:
     # Check development.md (required)
     dev_md = cwd / "docs" / "project" / "development.md"
     if dev_md.exists():
-        rprint(f"[green]✔︎[/green] docs/project/development.md exists")
+        rprint(f"[green]✔︎[/green] docs/development.md exists")
     else:
-        rprint("[red]✘[/red] docs/project/development.md missing (required!)")
+        rprint("[red]✘[/red] docs/development.md missing (required!)")
         rprint("   Create this file using docs/project/development.sample.md as a template.")
         has_errors = True
 
@@ -895,8 +953,55 @@ def _get_dir_stats(path: Path) -> tuple[int, int]:
     return file_count, total_size
 
 
+def _update_speculate_settings(project_root: Path) -> None:
+    """Create or update .speculate/settings.yml with current state.
+
+    Writes:
+      - last_update: Current ISO8601 timestamp
+      - last_cli_version: Version from importlib.metadata
+      - last_docs_version: _commit from .copier-answers.yml (if available)
+    """
+    from datetime import datetime, timezone
+    from importlib.metadata import version
+
+    import yaml
+    from strif import atomic_output_file
+
+    speculate_dir = project_root / ".speculate"
+    speculate_dir.mkdir(parents=True, exist_ok=True)
+    settings_file = speculate_dir / "settings.yml"
+
+    # Get docs version from copier answers if available
+    docs_version = None
+    answers_file = project_root / ".copier-answers.yml"
+    if answers_file.exists():
+        with open(answers_file) as f:
+            answers = yaml.safe_load(f) or {}
+        docs_version = answers.get("_commit")
+
+    # Build settings
+    settings = {
+        "last_update": datetime.now(timezone.utc).isoformat(),
+        "last_cli_version": version("speculate"),
+    }
+    if docs_version:
+        settings["last_docs_version"] = docs_version
+
+    with atomic_output_file(settings_file) as temp_path:
+        Path(temp_path).write_text(yaml.safe_dump(settings, default_flow_style=False))
+
+    rprint(f"[green]✔︎[/green] Updated .speculate/settings.yml")
+
+
+# Marker string used to detect if speculate header is already present
 SPECULATE_MARKER = "speculate project structure"
-SPECULATE_HEADER = f"IMPORTANT: You must read @docs/DOCS-README.md for project documentation (uses {SPECULATE_MARKER})."
+
+# Header to prepend to CLAUDE.md and AGENTS.md
+# This matches the format in the repo's own CLAUDE.md file
+SPECULATE_HEADER = """\
+IMPORTANT: You MUST read ./docs/development.md and ./docs/docs-overview.md for project documentation.
+(This project uses speculate project structure.)
+"""
 
 
 def _ensure_speculate_header(path: Path) -> None:
@@ -914,10 +1019,10 @@ def _ensure_speculate_header(path: Path) -> None:
             rprint(f"[dim]○[/dim] {path.name} already configured")
             return
         # Prepend header to existing content
-        new_content = SPECULATE_HEADER + "\n\n" + content
+        new_content = SPECULATE_HEADER + "\n" + content
         action = "Updated"
     else:
-        new_content = SPECULATE_HEADER + "\n"
+        new_content = SPECULATE_HEADER
         action = "Created"
 
     with atomic_output_file(path) as temp_path:
@@ -1076,6 +1181,9 @@ speculate install
     ├─► Check docs/ exists
     │       └─► If not, error: "Run speculate init first"
     │
+    ├─► Create/update .speculate/settings.yml
+    │       └─► last_update, last_cli_version, last_docs_version
+    │
     ├─► Generate/write CLAUDE.md
     │
     ├─► Generate/write AGENTS.md
@@ -1169,6 +1277,15 @@ _src_path: gh:jlevy/speculate  # Template source
 | `cli/src/speculate/cli/cli_commands.py` | Create | Command implementations |
 | `cli/README.md` | Update | Add Speculate usage |
 
+**Files created in user projects by `install`:**
+
+| File | Description |
+| --- | --- |
+| `.speculate/settings.yml` | Speculate state (last_update, versions) |
+| `CLAUDE.md` | Claude Code config (header added if missing) |
+| `AGENTS.md` | Codex config (header added if missing) |
+| `.cursor/rules/*.mdc` | Symlinks to agent rules |
+
 ## Resolved Decisions
 
 These decisions were made during spec review:
@@ -1185,7 +1302,8 @@ These decisions were made during spec review:
 | 8 | Install without init | Yes, just requires `docs/` directory to exist |
 | 9 | Include/exclude patterns | Supported with `*` and `**` wildcards |
 | 10 | development.md | Required; `status` exits with error if missing |
-| 11 | CLAUDE.md/AGENTS.md | Idempotent header prepend (checks for "speculate project structure") |
+| 11 | CLAUDE.md/AGENTS.md | Idempotent header prepend using two-line format from repo's CLAUDE.md; checks for "speculate project structure" marker |
+| 12 | Speculate state directory | `.speculate/settings.yml` with last_update, last_cli_version, last_docs_version |
 
 ### Key Implementation Notes
 
@@ -1193,15 +1311,21 @@ These decisions were made during spec review:
    symlinks with `.mdc` extension pointing to the source `.md` files.
 
 2. **development.md is required** — After `init`, users must create
-   `docs/project/development.md` using `development.sample.md` as a template.
+   `docs/development.md` using `development.sample.md` as a template.
    `speculate status` will error if this file is missing.
 
-3. **CLAUDE.md and AGENTS.md are idempotent** — The `install` command adds a single
-   header line at the top of existing files.
-   It checks for “speculate project structure” to avoid duplicate headers.
+3. **CLAUDE.md and AGENTS.md are idempotent** — The `install` command adds a two-line
+   header at the top of existing files (matching the format in the repo’s own
+   CLAUDE.md). It checks for “speculate project structure” marker to avoid duplicate
+   headers.
 
 4. **Include/exclude patterns** — Use `--include` and `--exclude` flags with `install`
    to filter which rules are linked to `.cursor/rules/`.
+
+5. **Speculate state in `.speculate/settings.yml`** — The `install` command
+   creates/updates this file with `last_update` (ISO8601), `last_cli_version`, and
+   `last_docs_version` (from `.copier-answers.yml` `_commit`). This tracks when
+   speculate was last run.
 
 * * *
 

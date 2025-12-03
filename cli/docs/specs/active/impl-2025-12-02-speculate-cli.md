@@ -75,12 +75,13 @@ The implementation is broken into phases that may be committed and tested separa
     - .git/
     - .github/
     - .cursor/
+    - .speculate/
     - __pycache__/
     - "*.pyc"
     - "*.lock"
   
   _skip_if_exists:
-    - docs/project/development.md
+    - docs/development.md
     - "docs/project/specs/active/*"
     - "docs/project/specs/done/*"
     - "docs/project/specs/future/*"
@@ -92,7 +93,7 @@ The implementation is broken into phases that may be committed and tested separa
   
   _message_after_copy: |
     Speculate docs installed!
-    See docs/DOCS-README.md for usage guide.
+    See docs/docs-overview.md for usage guide.
   ```
 
 ### Automated Testing Strategy
@@ -206,7 +207,7 @@ None.
 
   - Automatically call `install()` after copy
 
-  - Show instructions about creating `docs/project/development.md`
+  - Show instructions about creating `docs/development.md`
 
 - [ ] Implement `update` command:
 
@@ -218,26 +219,42 @@ None.
 
 - [ ] Implement `install` command:
 
+  - Create/update `.speculate/settings.yml` with:
+
+    - `last_update`: ISO8601 timestamp (current time in UTC)
+
+    - `last_cli_version`: Version from `importlib.metadata.version("speculate")`
+
+    - `last_docs_version`: `_commit` from `.copier-answers.yml` (if available)
+
   - Support `--include` and `--exclude` patterns (wildcards: `*`, `**`)
 
   - For CLAUDE.md and AGENTS.md: Add speculate header if not present (idempotent)
 
-  - Header: `"IMPORTANT: You must read @docs/DOCS-README.md for project documentation
-    (uses speculate project structure)."`
+  - Header format (two lines, matches repo’s own CLAUDE.md):
 
-  - Check for “speculate project structure” to avoid duplicate headers
+    ```
+    IMPORTANT: You MUST read ./docs/development.md and ./docs/docs-overview.md for project documentation.
+    (This project uses speculate project structure.)
+    ```
+
+  - Check for “speculate project structure” marker to avoid duplicate headers
 
   - Create `.cursor/rules/` symlinks with `.mdc` extension pointing to `.md` files
 
 - [ ] Implement `status` command:
 
+  - Check `.speculate/settings.yml` and display last_update, last_cli_version
+
   - Check `.copier-answers.yml`, `docs/`, tool configs
 
-  - **Error if `docs/project/development.md` is missing** (required setup)
+  - **Error if `docs/development.md` is missing** (required setup)
 
   - Exit with code 1 if development.md missing
 
 - [ ] Implement helper functions:
+
+  - `_update_speculate_settings(project_root)` — Create/update `.speculate/settings.yml`
 
   - `_ensure_speculate_header(path)` — Idempotent header management
 
@@ -254,9 +271,14 @@ None.
 
 - Run `speculate status` — should show initialized state
 
-- Run `speculate install` — should create CLAUDE.md, AGENTS.md, .cursor/rules/
+- Run `speculate install` — should create .speculate/settings.yml, CLAUDE.md, AGENTS.md,
+  .cursor/rules/
 
-- Run `speculate status` again — should show all configs present
+- Verify `.speculate/settings.yml` contains last_update, last_cli_version,
+  last_docs_version
+
+- Run `speculate status` again — should show all configs present including settings.yml
+  info
 
 - Run `make lint` — should pass
 
@@ -349,7 +371,7 @@ None.
 
   - Usage examples for all commands
 
-  - Link to docs/DOCS-README.md
+  - Link to docs/docs-overview.md
 
 ### Automated Testing Strategy
 

@@ -59,7 +59,7 @@ This process must be followed before committing code!
    BE SURE YOU RUN ALL TESTS (npm run precommit) as this includes codegen, formatting,
    linting, unit tests and integration tests.
 
-   Read @docs/project/development.md for additional background on test workflows.
+   Read @docs/development.md for additional background on test workflows.
 
    After any significant changes, ALWAYS run the precommit check:
 
