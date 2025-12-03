@@ -84,9 +84,11 @@ source = "uv-dynamic-versioning"
 vcs = "git"
 style = "pep440"
 bump = true
-# Use tag prefix for CLI-specific versioning in this monorepo.
-# Tags should be: cli-v1.0.0, cli-v1.0.1, etc.
-tag-prefix = "cli-v"
+# Fail if no matching tag found (prevents publishing invalid dev versions to PyPI)
+strict = true
+# Custom pattern for CLI-specific versioning in this monorepo.
+# Tags should be: cli-v0.1.0, cli-v0.1.1, etc.
+pattern = "^cli-v(?P<base>\\d+\\.\\d+\\.\\d+)(-(?P<stage>[a-zA-Z]+)\\.?(?P<revision>\\d+)?)?$"
 
 [tool.hatch.build.targets.wheel]
 # The source location for the package.
