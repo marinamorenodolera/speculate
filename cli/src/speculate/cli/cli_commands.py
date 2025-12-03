@@ -149,7 +149,7 @@ def update() -> None:
 
     print_header("Updating docs from upstream template...", cwd)
 
-    _ = copier.run_update(str(cwd), answers_file=str(answers_file), conflict="inline")
+    _ = copier.run_update(str(cwd), answers_file=COPIER_ANSWERS_FILE, conflict="inline")
 
     rprint()
     print_success("Docs updated successfully!")
