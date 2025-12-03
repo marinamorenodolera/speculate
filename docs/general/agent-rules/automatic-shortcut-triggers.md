@@ -40,7 +40,6 @@ instructions.
 | Updating docstrings | @shortcut:cleanup-update-docstrings.md |
 | Merging from upstream | @shortcut:merge-upstream.md |
 | Reviewing code, specs, docs | @shortcut:review-all-code-specs-docs-convex.md |
-| Evaluating a tool with LLM | @shortcut:evaluate-tool-with-llm.md |
 
 ## This is NOT Optional
 

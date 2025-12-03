@@ -2,93 +2,169 @@
 
 **Speculate** is a **project structure for spec-driven agent coding**.
 
-It includes **common rules, templates, and shortcut prompts** that help an agent plan
-better and write better code and a **CLI tool** that copies and updates these Markdown
-docs within your own repo.
+It includes **common rules, templates, and shortcut prompts** that help any coding agent
+like Claude Code, Codex, or Cursor plan better using specs, follow more defined
+processes that result in better code.
+You can browse these in the [docs/](docs/) folder.
 
-The goal of this agent structure is to improve speed *and* quality of development for
-individuals teams working with LLM agents in Claude Code, Codex, Cursor, Windsurf, etc.
-I’ve primarily used this myself and one other engineer, so we only really have
-experience with small teams, but we have found this agent coding structure extremely
-helpful.
+Speculate also includes a **CLI tool**, `speculate`, that helps copy and update these
+Markdown docs within your own repo.
 
-It is fairly complex, with many rules and checks, but it’s exactly these rules that give
-significant improvents in both speed and code quality.
-In paricular, at least for our full-stack development work, the workflows here in Claude
-Code and Cursor make it possible to ship significant features where almost all the code
-is agent written—yet it is not slop code.
-You can still read it as well as code by human engineers and if done well, decisions and
-architecture is documented much better than when it’s done by most human engineers.
+The goal of this structure is to improve development *and* quality of code.
 
-I’ve grown to use these rules and processes heavily and wanted to share rules across
-repositories, so have pulled all the reusable rules into this repo as open source.
+You can use these docs however you like, but we find it is the combination of workflows
+that really adds benefit.
+It is likely a good fit for individual senior engineers or small teams who want the
+velocity of writing lots of code with agents but still need sustainable, good
+engineering that won’t fall apart as a codebase grows in complexity.
 
-## Motivation
+## Background: Does Agent Coding Really Scale?
 
-The advantages of the Speculate project structure are:
+I’ve been an engineer for 20 years, mostly in startups.
+Over the past couple years I’ve used LLMs for coding heavily.
+As of summer 2025, I used LLMs heavily but usually very interactively, writing key parts
+myself and touching the code at almost every stage.
 
-- **Shared context:** As multiple human developers both work with LLMs, it allows all
-  people and tools to have appropriate context
+However, then I began working with a friend on a new but complex full-stack product.
+We had a lot to build so we began experimentation on using Claude Code and Cursor agents
+aggressively to write more and more of the code.
 
-- **Decomposition of tasks:** By decomposing common tasks in to clear, well-organized
-  processes, it allows greater flexibility in reusing instructions and rules
+At first, unsurprisingly, after the codebase grew, we saw lots of slop code and
+painfully stupid bugs.
+This really isn’t surprising: the training data for LLMs includes mostly mediocre code.
+Even worse, just like with human engineers, if you let an agent ship poor code, that one
+bad bit code encourages the next agent to repeat the problem.
 
-- **Reduced context:** Decomposition allows smaller context and this allows more
-  reliable adherence to rules and guardrails
+Without good examples and careful prompting, even the best agents perpetuate terrible
+patterns and rapidly proliferate unnecessary complexity.
+For example, agents will routinely
 
-This avoids common pitfalls when developing with LLMs:
+- Make a conspicuously poor decision (like parsing YAML with regular expressions) then
+  double down on it over and over
 
-- Losing track of context on larger features or bugfixes
+- Blindly confirm erroneous assumptions or statements you make (“you’re absolutely
+  right!”) even if official docs or tests or code clearly show they are false
 
-- Identifying ambiguous features early and clarifying with the user
+- Create new TypeScript types over and over that nearly duplicate other types
 
-- Using wrong tools or not following processes appropriate to a given project
+- Choose poor libraries or out of date versions of libraries
 
-- Using wrong or out of date SDKs
+- Forget important testing steps or not write tests at all
 
-- Making poorly thought through architectural choices that lead to needless complication
+- Stop commenting or documenting code effectively then repeat the poor patterns until
+  there is no effective documentation of the purpose of files or key types or functions
 
-## Notes and Caveats
+- Write trivial and useless test clutter (including provably trivial tests, like
+  creating an object with a certain value and checking its fields didn’t mysteriously
+  change)
 
-After using this structure heavily for the past 2-3 months as well as using coding tools
-in other ways for the past 2 years, we do have some take-aways:
+- Use lots of optional parameters then refactor and accidentally omit those parameters,
+  creating subtle bugs not caught by the type checker
 
-1. Agent coding is changing ridiculously quickly and it has improved a lot just since
-   mid-2025. But none of this is foolproof.
-   Even the best agents like Claude Sonnet 4.5 and GPT-5 Codex High make really stupid
-   errors sometimes.
+- Design code without any good agent-friendly testing loops, like using complex database
+  queries that can only be tested via a React web interface (they just tell you it’s
+  “production ready” and suggest that *you* test it!)
 
-2. Spec-driven development like this is most effective if you’re a fairly senior
-   engineer already and can agressively correct the agent during spec writing and when
-   reviewing code.
+- Preserve backward compatibility needlessly (like every time they rename a method!)
+  but then forget it in others (like subtle schema changes)
 
-3. It is also most effective for full-stack or product engineering, where the main
-   challenge is implementing everything in a flexible way.
-   Visually intensive frontend engineering and “harder” algorithmic, infrastructure, or
-   machine learning engineering still seem better suited to iteratively writing code by
-   hand.
+- Compound one poor design choice on top of another repeatedly, until it’s a Rube
+  Goldberg machine where the whole design needs to be simplified immensely
 
-4. Even if you are writing code by hand, the processes for writing research briefs and
-   architecture docs is still useful.
-   Agents are great at maintaining docs!
+- Make fundamental incorrect assumptions about a problem if you have not been
+  sufficiently explicit (and unless prompted, not check with you about it)
 
-5. For product engineering, you can often get away with writing very little code
-   manually if the spec docs are reviewed.
-   With good templates and examples, you can chat with the agent to write the specs as
-   well. But you do have to actually read the spec docs and review the code!
+- Invent features that don’t exist in tools and libraries, wasting large amounts of time
+  before discovering the error
 
-6. But with some discipline this appraoch is really powerful.
-   Contrary to what some say, we have found it doesn’t lead to buggy, dangerous, and
-   unmaintainable code the way blindly vibe coding does.
-   And it is much faster than writing the same code fully by hand.
+- Re-invent the same Tailwind UI patterns and stylings over and over with random and
+  subtle variations
 
-7. Avoid testing cycles that are manual!
-   It’s best to combine this approach with an architecture that makes testing really
-   easy. If at all possible, insist on architectures where all tasks are easy to run from
-   the command line. Insist on mockable APIs and databases, so even integration testing
-   is easy from the command line.
+But we used all these problems as a chance to get more disciplined and improve
+processes—much like you would with a human engineering team.
 
-## Organization and Principles
+The first area of improvement was **more rigorous development processes**. We moved most
+coding to specification-driven developent.
+We broke specs into planning, implementation, and validation stages for more precision.
+We enforced strict coding rules at commit time to reduce common bugs we saw agents
+introduce.
+
+And we added tests. Lots and lots of tests: unit tests, integration tests, golden tests,
+and end-to-end tests.
+
+The second way was **more flexible context engineering**. In practice, this really means
+lots of docs organized by workflow purpose.
+You have longer-lived research docs with background, architecture docs summarizing the
+system, several kinds of specs for planning, implementation, and validation, and
+shortcut docs that define process.
+
+The workflows are fairly complex.
+But it’s exactly these rules and processes that give significant improvents in both
+speed and code quality.
+The codebase grew quickly, but the more good structure we added, the more maintainable
+it became.
+
+After about a month of this, we didn’t wince when looking at agent code anymore.
+Refactors were also easier because we had good architecture docs.
+In about two months, we shipped about 250K lines of full-stack TypeScript code (with
+Convex as a backend) and about 250K lines of Markdown docs.
+
+For truly algorithmic problems, architecture and infrastructure design, and machine
+learning engineering, it seems like deeper human involvement is still essential.
+Agents are just too prone to large mistakes a junior engineer might miss.
+But for much routine product engineering, we feel most of the agent code is on a par or
+better than the engineering quality we’ve seen in other startup teams.
+
+You can still read the agent code about as well as code written by good human engineers.
+And decisions and architecture is documented *better* than by most human engineering
+teams.
+
+In short, aggressive use of agent coding can go very poorly or very well, depending on
+the kind of engineering, the process, and the engineering experience of the team.
+We are still evolving it, but we have found this agent coding structure extremely
+helpful for certain kinds of development.
+It likely works best for very small teams of senior engineers working on feature-rich
+products, but parts of this process can likely be adapted to other situations too.
+
+## Advantages of Spec-Driven Coding
+
+It’s worth talking a little why specs are so important for agents.
+With a good enough model and agent, shouldn’t it be able to just write the code based on
+a user request? Often, no!
+Specs have key advantages because they:
+
+- **Enforce a thinking process on the agent:** LLMs do much, much better if forced to
+  think step by step.
+
+- **Enforce a thinking process for the human:** Writing a spec forces the user to think
+  through ambiguities or assumptions earlier, before the agent gets too far wasting time
+  on implementing something that won’t work as intended.
+
+- **Manage context for the agent:** This helps the agent have only the relevant
+  information from the codebase in context at a given time.
+  Specs can also easily be reviewed efficiently by a second or third model!
+  (This is a big advantage!)
+
+- **Manage context for the human:** If written well, specs are more efficient at
+  allowing a senior engineer to review and correct decisions at a higher level of
+  abstraction. (As a side note, this is why good agent coding is much easier for senior
+  engineers than junior engineers.)
+
+- **Share context:** Since the spec is shared, as multiple human developers work
+  together and with agents, more shared context in docs allows all people and tools to
+  look at the same things first.
+
+- **Enforce consistency in development tasks:** By breaking the development process into
+  research, planning, architecture, implementation, and validation phases, it allows
+  greater consistency at avoiding common mistakes.
+
+- **Allow consolidation of internal and external references**. Specs should always have
+  copious citations and links to the codebase.
+  This lets an agent gain context but then go deeper where needed.
+  And it is key to avoiding many of the problems where agents re-invent the wheel
+  repeatedly because they are unaware of better approaches.
+
+## About Organizing Specs and Docs
 
 This repo is largely just a bunch of Markdown docs in a clean organized structure.
 We try to keep all docs small to medium sized, for better context management.
@@ -130,27 +206,137 @@ The key insights for this approach are:
   Agents are great at following short to-do lists so all shortcut docs are just ways to
   use these to-do lists with less typing.
 
+## Documentation Layout
+
+```
+docs/
+├── development.md              # You create this! Setup, build, lint, test workflows
+├── docs-overview.md            # Summary for agents to read first
+│
+├── general/                    # Shared across repos (synced via `speculate update`)
+│   ├── agent-rules/            # Coding standards and best practices
+│   │   ├── general-coding-rules.md
+│   │   ├── general-testing-rules.md
+│   │   ├── typescript-rules.md
+│   │   ├── python-rules.md
+│   │   └── ...
+│   ├── agent-shortcuts/        # Task prompts (shortcut:*.md)
+│   │   ├── shortcut:new-plan-spec.md
+│   │   ├── shortcut:implement-spec.md
+│   │   ├── shortcut:commit-code.md
+│   │   └── ...
+│   └── agent-guidelines/       # Longer guidance docs (TDD, DI, testing)
+│
+└── project/                    # Project-specific (you add/edit these)
+    ├── specs/                  # Short-lived feature/task specs
+    │   ├── active/             # In-progress specs
+    │   ├── done/               # Completed (archived)
+    │   ├── future/             # Planned
+    │   ├── paused/             # On hold
+    │   ├── template-plan-spec.md
+    │   ├── template-implementation-spec.md
+    │   ├── template-validation-spec.md
+    │   └── template-bugfix.md
+    ├── architecture/           # Long-lived system design docs
+    │   ├── current/
+    │   ├── archive/
+    │   └── template-architecture.md
+    └── research/               # Long-lived research and investigations
+        ├── current/
+        ├── archive/
+        └── template-research-brief.md
+```
+
 ## Types of Docs
 
-Speculate maintains docs of several kinds in your repo.
+The Speculate structure has folders for several kinds in your repo.
 
-The main types are:
+All docs these docs fall into two categories
 
-- General **agent rules** for best practices, test-driven development, and rules for
-  Python and TypeScript
+- **general docs** (`docs/general`) that are shared across repos and you typically don’t
+  need to modify
 
-- **Spec docs** for *planning, implementation, and validation spec.
-
-There are two categories of docs:
-
-- **general docs** that are shared across repos and you typically don’t need to modify
-
-- **project-specific docs** that are only used by the current repo and that you will add
-  to routinely
+- **project-specific docs** (`docs/project`) that are only used by the current repo and
+  that you will add to routinely
 
 If you have a new doc, you usually add it to project-specific docs initially, then
 consider if it goes into the general docs upstream, so you can install it in other
 repos.
+
+Then there are several kinds of docs:
+
+- **Spec docs** (`docs/project/specs/`) for detailed planning, implementation, and
+  validation. Sometimes a single doc is enough but for complex work, each phase should
+  probably be a doc of its own, to manage context size.
+
+  - These last only a few days usually, and can be archived my moving them to the
+    `docs/project/specs/done/` folder once they are done.
+
+  - In our workflows, we usually have specs with a prefix and a date
+    (`plan-YYYY-MM-DD-*.md`, `impl-YYYY-MM-DD-*.md`, `valid-YYYY-MM-DD-*.md`). Bugfixes
+    can use their own template as well.
+
+  - A good length is 500-800 lines of (linewrapped) Markdown: small enough both you and
+    the agent can read fairly quickly.
+
+- **Research briefs** (`docs/project/research/`) to assemble the results of web or other
+  research and consolidate it with insights from the codebase or user needs.
+  For example, if you are dealing with rate limiting, you should have a research doc on
+  all the rate limits of all providers you use as well as the best libraries to use for
+  rate limiting.
+
+  - They are long lived but may not be maintained unless needed.
+
+  - These can be any length but can link heavily.
+    They need to be exhaustive at least in terms of links.
+
+- **Architecture docs** to give an overview of all aspects of the system, linking to all
+  the relevant parts of the codebase and all relevant libraries that are used.
+
+  - They are long lived and should be regularly maintained.
+
+  - They should not be too long (>2000 lines) so they can be read into context and then
+    used for additional planning.
+
+- **Agent rules** (`docs/general/agent-rules/`) for best practices, test-driven
+  development, and rules for Python and TypeScript coding.
+  For these, the more the better, if they are good rules.
+  The only challenge is you need each doc to be manageable size, and bring them into
+  context only at the right time to enforce the rules.
+
+  - These are long-lived and should be improved regularly
+
+- **Agent shortcuts** (`docs/general/agent-shortcuts/`) for common processes.
+  Thes are simpliy very small Markdown docs with an outline of typically 3–10 steps.
+  They can reference other agent rule docs.
+  Agents are quite good at using checklists of this length so it is generally sufficient
+  just to tag a doc and it will do the right thing.
+
+  - These are long-lived and should be expanded and improved regularly.
+
+You can reference any of these docs as needed in chat.
+The most common pattern is simply to mention the shortcut docs.
+For example, the key ones are:
+
+- @shortcut:new-plan-spec.md — Create a new feature plan
+
+- @shortcut:new-implementation-spec.md — Create an implementation spec
+
+- @shortcut:new-validation-spec.md — Create a validation spec
+
+- @shortcut:new-research-brief.md — Create a new research brief
+
+- @shortcut:new-architecture-doc.md — Create a new architecture document
+
+- @shortcut:revise-architecture-doc.md — Revise an existing architecture document
+
+- @shortcut:implement-spec.md — Implement from an existing spec
+
+- @shortcut:precommit-process.md — Run pre-commit checks
+
+- @shortcut:commit-code.md — Prepare commit message
+
+- @shortcut:create-pr.md — Create a pull request
 
 ## CLI Workflows
 
@@ -302,53 +488,51 @@ But it is also quite powerful.
 By now I hope you see how all these docs work together in a structure to make agent
 coding quite fast *and* the quality of code higher.
 
-## Documentation Layout
+## More Take-Aways
 
-All project and development documentation is organized in `docs/`, which follow the
-Speculate project structure:
+After using this structure heavily for the past 2-3 months as well as using coding tools
+in other ways for the past 2 years, we do have some take-aways:
 
-### `docs/development.md` — Essential development docs
+1. Agent coding is changing ridiculously quickly and it has improved a lot just since
+   mid-2025. But none of this is foolproof.
+   Even the best agents like Claude Sonnet 4.5 and GPT-5 Codex High make really stupid
+   errors sometimes.
 
-- `development.md` — Environment setup and basic developer workflows (building,
-  formatting, linting, testing, committing, etc.)
+2. Spec-driven development like this is most effective if you’re a fairly senior
+   engineer already and can agressively correct the agent during spec writing and when
+   reviewing code.
 
-Always read `development.md` first!
-Other docs give background but it includes essential project developer docs.
+3. It is also most effective for full-stack or product engineering, where the main
+   challenge is implementing everything in a flexible way.
+   Visually intensive frontend engineering and “harder” algorithmic, infrastructure, or
+   machine learning engineering still seem better suited to iteratively writing code by
+   hand.
 
-### `docs/general/` — Cross-project rules and templates
+4. Even if you are writing code by hand, the processes for writing research briefs and
+   architecture docs is still useful.
+   Agents are great at maintaining docs!
 
-General rules that apply to all projects:
+5. For product engineering, you can often get away with writing very little code
+   manually if the spec docs are reviewed.
+   With good templates and examples, you can chat with the agent to write the specs as
+   well. But you do have to actually read the spec docs and review the code!
 
-- @docs/general/agent-rules/ — General rules for development best practices (general,
-  pre-commit, TypeScript, Convex)
+6. But with some discipline this approach is really powerful.
+   Contrary to what some say, we have found it doesn’t lead to buggy, dangerous, and
+   unmaintainable code the way blindly vibe coding does.
+   And it is much faster than writing the same code fully by hand.
 
-- @docs/general/agent-shortcuts/ — Reusable task prompts for agents
-
-- @docs/general/agent-guidelines/ — Guidelines and notes on development practices
-
-### `docs/project/` — Project-specific documentation
-
-Project-specific specifications, architecture, and research docs:
-
-- @docs/project/specs/ — Change specifications for features and bugfixes:
-
-  - `active/` — Currently in-progress specifications
-
-  - `done/` — Completed specifications (historic)
-
-  - `future/` — Planned specifications
-
-  - `paused/` — Temporarily paused specifications
-
-- @docs/project/architecture/ — System design references and long-lived architecture
-  docs (templates and output go here)
-
-- @docs/project/research/ — Research notes and technical investigations
+7. Avoid testing cycles that are manual!
+   It’s best to combine this approach with an architecture that makes testing really
+   easy. If at all possible, insist on architectures where all tasks are easy to run from
+   the command line. Insist on mockable APIs and databases, so even integration testing
+   is easy from the command line.
 
 ## Installing to Claude Code, Codex, and Cursor
 
-The source of truth for all rules is `docs/general/agent-rules/`. These rules are
-consumed by different tools via their native configuration formats:
+The source of truth for all rules is `docs/general/agent-rules/`. After running
+`speculate init`, these rules are installed into your repo and consumed by different
+tools via their native configuration formats:
 
 | Tool | Configuration File | How Rules Are Loaded |
 | --- | --- | --- |
@@ -358,7 +542,7 @@ consumed by different tools via their native configuration formats:
 
 ### Cursor Setup
 
-For Cursor, create symlinks from `.cursor/rules/` to the docs:
+For Cursor, create symlinks (or copies) from `.cursor/rules/` to the docs:
 
 ```bash
 mkdir -p .cursor/rules
@@ -368,8 +552,8 @@ ln -s ../../docs/general/agent-rules/*.md .
 
 ### Claude Code and Codex Setup
 
-The root-level `CLAUDE.md` and `AGENTS.md` files point agents to read rules from
-@docs/general/agent-rules/. No additional setup needed.
+Create root-level `CLAUDE.md` and `AGENTS.md` files that point agents to read rules from
+@docs/general/agent-rules/.
 
 ### Automatic Workflow Activation
 
@@ -377,35 +561,8 @@ The @automatic-shortcut-triggers.md file enables automatic shortcut triggering.
 When an agent receives a request, it checks the trigger table and uses the appropriate
 shortcut from `docs/general/agent-shortcuts/`.
 
-## Agent Task Shortcuts
-
-Shortcuts in `docs/general/agent-shortcuts/` define reusable workflows.
-They are triggered automatically via @automatic-shortcut-triggers.md or can be invoked
-explicitly.
-
-### Direct Invocation
-
-You can also invoke shortcuts explicitly:
-
-- @shortcut:new-plan-spec.md — Create a new feature plan
-
-- @shortcut:new-implementation-spec.md — Create an implementation spec
-
-- @shortcut:new-validation-spec.md — Create a validation spec
-
-- @shortcut:new-research-brief.md — Create a new research brief
-
-- @shortcut:new-architecture-doc.md — Create a new architecture document
-
-- @shortcut:revise-architecture-doc.md — Revise an existing architecture document
-
-- @shortcut:implement-spec.md — Implement from an existing spec
-
-- @shortcut:precommit-process.md — Run pre-commit checks
-
-- @shortcut:commit-code.md — Prepare commit message
-
-- @shortcut:create-pr.md — Create a pull request
+You can also invoke shortcuts explicitly by just referencing them (e.g. typing `@` and
+selecting `shortcut:new-plan-spec.md`).
 
 ### Automatic Triggering
 
