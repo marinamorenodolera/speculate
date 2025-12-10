@@ -385,7 +385,11 @@ docs/
 │   │   ├── shortcut:implement-spec.md
 │   │   ├── shortcut:commit-code.md
 │   │   └── ...
-│   └── agent-guidelines/       # Longer guidance docs (TDD, DI, testing)
+│   ├── agent-guidelines/       # Longer guidance docs (TDD, DI, testing)
+│   └── agent-setup/            # Tool setup guides for agents
+│       ├── github-cli-setup.md
+│       ├── beads-setup.md
+│       └── ...
 │
 └── project/                    # Project-specific (you add/edit these)
     ├── specs/                  # Short-lived feature/task specs
@@ -473,6 +477,13 @@ Then there are several kinds of docs:
 
   - These are long-lived and should be expanded and improved regularly.
 
+- **Agent setup docs** (`docs/general/agent-setup/`) for tool setup and configuration.
+  These are step-by-step guides that help agents install and configure tools they need.
+  This is especially important for cloud-based environments like Claude Code Cloud that
+  don’t have tools like `gh` (GitHub CLI) and `bd` (beads) working initially.
+
+  - These are long-lived and should be updated as tools evolve.
+
 You can reference any of these docs as needed in chat.
 The most common pattern is simply to mention the shortcut docs.
 For example, the key ones are:
@@ -496,6 +507,12 @@ For example, the key ones are:
 - @shortcut:commit-code.md — Prepare commit message
 
 - @shortcut:create-pr.md — Create a pull request
+
+And for setting up tools, reference setup docs:
+
+- @github-cli-setup.md — Install and configure the GitHub CLI for PR workflows
+
+- @beads-setup.md — Set up the beads issue tracker
 
 ## CLI Workflows
 
