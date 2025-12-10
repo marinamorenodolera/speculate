@@ -6,14 +6,20 @@ Do NOT use markdown TODOs, task lists, or other tracking methods.
 **Run this now** to get an overview of `bd`:
 
 ```bash
-bd prime || echo "bd not installed"
+bd status || echo "bd not installed"
 ```
 
 **If bd is not installed:**
 ```bash
 go install github.com/steveyegge/beads/cmd/bd@latest
 export PATH="$PATH:$HOME/go/bin" # Required each session
-bd prime  # Confirm it is working
+bd prime  # Confirm it is working, get instructions
+```
+
+**If bd says `Error: no beads database found` it requires one-time setup:**
+```bash
+bd init
+bd prime  # Get instructions
 ```
 
 ### Issue Types
