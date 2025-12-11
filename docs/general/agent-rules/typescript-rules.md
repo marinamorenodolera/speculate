@@ -290,3 +290,24 @@ alwaysApply: true
     throw new Error(`Failed to do X because of Y: ${localVar.infoDetails}: ${error.message}`);
   }
   ```
+
+## File Operations
+
+- **Use `atomically` for writing files:** When writing files to disk, use the
+  `atomically` library instead of `fs.writeFile` or `fs.writeFileSync`. This prevents
+  partial or corrupted files if the process crashes mid-write.
+
+  The `atomically` library writes to a temp file first, then renames atomically to the
+  final path. This guarantees you never have half-written files.
+  (`atomically` is TypeScript-native, zero third-party dependencies, slightly faster,
+  has more robust error handling and retry logic than `write-file-atomic`.)
+
+  ```ts
+  // BAD: Can leave corrupted file if process crashes mid-write
+  import { writeFileSync } from 'fs';
+  writeFileSync(filePath, content);
+  
+  // GOOD: Modern TypeScript-native with zero dependencies
+  import { writeFile } from 'atomically';
+  await writeFile(filePath, content);
+  ```
