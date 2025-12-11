@@ -150,7 +150,29 @@ def update() -> None:
 
     print_header("Updating docs from upstream template...", cwd)
 
-    _ = copier.run_update(str(cwd), answers_file=COPIER_ANSWERS_FILE, conflict="inline")
+    try:
+        _ = copier.run_update(
+            str(cwd),
+            answers_file=COPIER_ANSWERS_FILE,
+            conflict="inline",
+            overwrite=True,  # Required to update subprojects
+        )
+    except Exception as e:
+        error_msg = str(e)
+        # Provide clearer error messages for common issues
+        if "dirty" in error_msg.lower():
+            print_error(
+                "Repository has uncommitted changes",
+                "Please commit or stash your changes before running update.",
+            )
+        elif "subproject" in error_msg.lower():
+            print_error(
+                "Update failed",
+                "Try running `speculate init --overwrite` to reinitialize.",
+            )
+        else:
+            print_error("Update failed", error_msg)
+        raise SystemExit(1) from None
 
     rprint()
     print_success("Docs updated successfully!")
