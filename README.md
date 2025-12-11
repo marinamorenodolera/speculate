@@ -1,8 +1,8 @@
 # Speculate
 
-🔹 Read ***[Thoughts On Spec-Driven Agent
-Coding](about/thoughts_on_spec_driven_agent_coding.md)*** for more on experiences using
-these workflows.
+👉 *Read **[Lessons from 500K Lines of Spec-Driven Agent
+Coding](about/lessons_in_spec_coding.md)** for more on experiences using these
+workflows.*
 
 ⚠️ *This is alpha quality!
 Although they’re imperfect and evolving, these workflows and prompts seem to be very

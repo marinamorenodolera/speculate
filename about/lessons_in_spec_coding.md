@@ -1,41 +1,53 @@
-## Thoughts on Spec-Driven Agent Coding
+# Lessons from 500K Lines of Spec-Driven Agent Coding
 
 Joshua Levy ▪ 2025-12-10
 
-🔹 See the new ***[speculate](https://github.com/jlevy/speculate)*** repo for all the
-prompts and templates discussed or [these slides](speculate_slides.html) from a talk I
-gave about this.
+👉 *You can try all this out!
+The **[speculate](https://github.com/jlevy/speculate)** repo has all the prompts and
+templates discussed below.
+You can also see [these slides](speculate_slides.html) from a talk I gave about this.*
 
-### Can Agents Write Most of Your Code?
+## Can You Trust Agents to Write Most of Your Code?
 
-I’ve read and written a lot of code over the past 20 years, mostly in startups.
-Over the past couple years I’ve been heavily using LLMs for coding.
-But until summer 2025, I did it very interactively, usually in Cursor, writing key parts
-myself, then LLMs to edit and debug, touching the code at almost every stage.
+In the past few weeks, I’ve been doing a *lot* of agent coding and wanted to share some
+learnings after building a fairly complex product that is almost entirely agent coded.
+It’s a fairly complex full-stack web app,
+[AI Trade Arena](https://www.aitradearena.com/), which we launched last week and was
+[#1 on HN](https://news.ycombinator.com/item?id=46154491) for the day.
 
-However, then I began working with a friend on a new but complex full-stack product,
-[AI Trade Arena](https://www.aitradearena.com/). This had a lot of product surface area.
-So we began to experiment with using Claude Code and Cursor agents aggressively to write
-more and more of the code.
-A greenfield project with a modern framework (this is a full-stack agent framework and
-web UI in TypeScript with a [Convex](https://github.com/get-convex) backend) and only 2
-(human) developers was a good testbed for new development processes.
+This was built with two developers ([Kam](https://x.com/kamleung911) and
+[me](https://x.com/ojoshe)) with about 250K lines of TypeScript and 250K lines of
+Markdown docs. It is about 95% agent-written code and 90% agent-written specs.
 
-Unlike quick vibe coding projects, we wanted this to be a maintainable product.
-At first, unsurprisingly, as the codebase grew, we saw lots of slop code and painfully
-stupid bugs. This really isn’t surprising: by now we all realize the training data for
-LLMs includes mostly mediocre code.
-Even worse, just like with human engineers, if you let an agent ship poor code, that one
-bad bit of code encourages the next agent to repeat the problem.
+I’m a longtime startup engineer and over the past couple years I’ve been heavily using
+LLMs for coding. But until summer 2025, I did it very interactively, usually in Cursor,
+writing key parts myself, then using LLMs to fill in parts and to debug.
+I’m a pretty picky code reviewer and usually ended up touching the code at almost every
+stage.
+
+A greenfield project like this, was a good testbed for new development processes.
+It’s a full-stack web app with a React web UI and a backend agent framework.
+We chose [Convex](https://github.com/get-convex) for the backend.[^1] Unlike quick vibe
+coded projects, we wanted this to be a maintainable codebase we could use in a real
+product.
+
+## Initial Agent Code Problems
+
+We began by using Claude Code and Cursor agents aggressively to write more and more of
+the code. At first, unsurprisingly, as the codebase grew, we saw lots of slop code and
+painfully stupid bugs.
+This really isn’t surprising: by now we all realize the training data for LLMs includes
+mostly mediocre code.
+
+Just like with human engineers, if you let an agent ship poor code, that one bad bit of
+code encourages the next agent to repeat the problem.
 Even the best agents using modern models like Claude Sonnet 4.5 and GPT-5 Codex High
 make *really* stupid (and worse, subtle) errors.
-
-### Common Agent Problems
 
 Without good examples and careful prompting, even the best agents perpetuate terrible
 patterns and rapidly proliferate unnecessary complexity.
 
-For example, agents will routinely
+For example, we saw agents routinely:
 
 - Make a conspicuously poor decision (like parsing YAML with regular expressions) then
   double down on it over and over
@@ -78,7 +90,7 @@ For example, agents will routinely
 - Re-invent the same Tailwind UI patterns and stylings over and over with random and
   subtle variations
 
-### Enforcing Process and Quality
+## Enforcing Process and Quality
 
 We used all these problems as a chance to get more disciplined and improve
 processes—much like you would with a human engineering team.
@@ -118,17 +130,14 @@ It’s exactly these rules and processes that give significant improvements in b
 and code quality. The codebase grew quickly, but the more good structure we added, the
 more maintainable it became.
 
-### What Worked
+## What Worked
 
-After about a month of this, we didn’t wince as often because the code quality improved,
-even when the code was entirely agent-written.
+After about few weeks of this, we didn’t wince as often because the code quality
+improved, even when the code was entirely agent-written.
 Refactors were also easier because we had good architecture docs.
 
-In about two months, we shipped **about 250K lines of full-stack TypeScript code** (with
-Convex as a backend) and **about 250K lines of Markdown docs**. If you count transient
-docs as well as long-lived docs, it’s pretty common to have as much documentation as
-code (but if you only count long-lived docs, it’s probably more like 25% docs and 75%
-code).
+In two months, we shipped about **250K lines** of full-stack TypeScript code and about
+**250K lines** of Markdown docs of many kinds:
 
 - About **95% of the code** was agent written, but with varying amounts of iterative
   human feedback.
@@ -142,6 +151,11 @@ code).
   For example, optional arguments in TypeScript were so error prone for agent refactors,
   we actually just ban the agent from using it and insist on explicit nullable
   arguments.
+
+- If you count transient docs as well as long-lived docs, we find we usually had in
+  total about as much docs as code.
+  But if you ignore transient docs like completed specs, it’s more like **25% long-lived
+  docs and 75% code**.
 
 For truly algorithmic problems, architecture and infrastructure design, and machine
 learning engineering, it seems like deeper human involvement is still essential.
@@ -160,7 +174,7 @@ helpful for certain kinds of development.
 It likely works best for very small teams of senior engineers working on feature-rich
 products. But parts of this process can likely be adapted to other situations too.
 
-### Advantages of Spec-Driven Coding
+## Advantages of Spec-Driven Coding
 
 It’s worth talking a little about why specs are so important for agents.
 With a good enough model and agent, shouldn’t it be able to just write the code based on
@@ -267,7 +281,7 @@ I’ve started integrating beads into the existing spec workflows to track all
 implementation work and it seems to complement the other docs it pretty well so far.
 (I’ve only been doing this for a few days so will update this soon.)
 
-### More Recommendations
+## More Recommendations
 
 A few more thoughts on all this:
 
@@ -303,7 +317,7 @@ A few more thoughts on all this:
    command line so it is “token friendly” and allows most of the code paths to be tested
    without UI testing.
 
-### Leveling Up Your Testing
+## Leveling Up Your Testing
 
 If there’s one final point to emphasize, it’s the last one.
 Encourage *extensive* testing, especially if you can design it in ways where the testing
@@ -319,9 +333,9 @@ In particular, testing shouldn’t require a web browser!
   command line and can be included in standard tests on every commit or PR.
 
 As an example, here are the kinds of tests we ask agents to use in
-[our TDD guidelines](https://github.com/jlevy/speculate/docs/general/agent-guidelines/general-tdd-guidelines.md).
+[our TDD guidelines](https://github.com/jlevy/speculate/blob/main/docs/general/agent-guidelines/general-tdd-guidelines.md).
 
-> Tests in the project are broken down into three types:
+> Tests in the project are broken down into four types:
 > 
 > 1. **Unit** — fast, focused tests for small units of business logic
 >    
@@ -329,15 +343,13 @@ As an example, here are the kinds of tests we ask agents to use in
 >
 >    - Typically part of CI builds.
 >
-> 2. **Integration** — tests that exercise multiple components efficiently
+> 2. **Integration** — tests that efficiently exercise multiple components
 >    
 >    - Mock external APIs
 >
 >    - No network/web access
 >
 >    - Typically part of CI builds.
->
->    - File names end with integration.test.ts
 >
 > 3. **Golden** — tests that check behavior in a fine-grained way across known “golden”
 >    scenarios
@@ -358,10 +370,11 @@ As an example, here are the kinds of tests we ask agents to use in
 >
 >    - Typically part of CI builds as long as they are fast enough.
 >
-> 4. **E2E** — tests of real system behavior with live APIs.
->    Are not run on every commit as they can have costs or side effects or be slow.
->    Requires all API keys.
->    File names end with e2e.test.ts
+> 4. **E2E** — tests of real system behavior with live APIs
+>    
+>    - Are not run on every commit as they can have costs or side effects or be slow.
+>
+>    - Require API keys and network access.
 
 In particular, the use of **golden tests** is quite powerful if you design it into your
 system from early on.
@@ -369,3 +382,10 @@ For any workflow or operation, it should be possible to capture and save stable 
 sessions (or traces) of everything that happened in a stable, serialized form.
 Then a large portion of your end-to-end testing is token friendly and possible without
 human validation.
+
+[^1]: We’ve been very happy with Convex!
+    It takes a little adjustment but it is actually a great complement to agent coding.
+    We recommend checking out their quite excellent
+    [templates](https://github.com/get-convex/templates) to see realistic examples of
+    how to use it.
+

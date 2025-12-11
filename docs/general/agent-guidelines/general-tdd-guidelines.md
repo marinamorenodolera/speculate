@@ -99,15 +99,15 @@ Always run all the tests (except long-running tests) each time.
 
 # Project Testing Guidelines
 
-Tests in the project are broken down into three types:
+Tests in the project are broken down into four types:
 
-1. Unit — fast, focused tests for small units of business logic
+1. **Unit** — fast, focused tests for small units of business logic
 
    - No network/web access
 
    - Typically part of CI builds.
 
-2. Integration — tests that exercise multiple components efficiently
+2. **Integration** — tests that efficiently exercise multiple components
 
    - Mock external APIs
 
@@ -115,9 +115,7 @@ Tests in the project are broken down into three types:
 
    - Typically part of CI builds.
 
-   - File names end with integration.test.ts
-
-3. Golden — tests that check behavior in a fine-grained way across known “golden”
+3. **Golden** — tests that check behavior in a fine-grained way across known “golden”
    scenarios
 
    - These are an essential type of test that is often neglected but very powerful!
@@ -134,9 +132,10 @@ Tests in the project are broken down into three types:
      excessively long. Golden tests confirm actual session run matches expected session,
      validating every part of the execution.
 
-   - Typicaly part of CI builds as long as they are fast enough.
+   - Typically part of CI builds as long as they are fast enough.
 
-4. E2E — tests of real system behavior with live APIs.
-   Are not run on every commit as they can have costs or side effects or be slow.
-   Requires all API keys.
-   File names end with e2e.test.ts
+4. **E2E** — tests of real system behavior with live APIs
+
+   - Are not run on every commit as they can have costs or side effects or be slow.
+
+   - Require API keys and network access.
