@@ -300,15 +300,21 @@ examples of (1) general rules (in this case TDD guidelines), (2) a research brie
 
 ### General Docs: Rules Example
 
-![General docs example](images/cursor_docs_general_rules.png)
+<p align="center"> <a href="images/cursor_docs_general_rules.png"><img
+src="images/cursor_docs_general_rules.png" width="750" alt="General docs example"></a>
+</p>
 
 ### Project Docs: Research Brief Example
 
-![Project research doc example](images/cursor_docs_project_research.png)
+<p align="center"> <a href="images/cursor_docs_project_research.png"><img
+src="images/cursor_docs_project_research.png" width="750" alt="Project research doc
+example"></a> </p>
 
 ### Project Docs: Spec Example
 
-![Project spec example](images/cursor_docs_project_specs.png)
+<p align="center"> <a href="images/cursor_docs_project_specs.png"><img
+src="images/cursor_docs_project_specs.png" width="750" alt="Project spec example"></a>
+</p>
 
 ## More Take-Aways
 
